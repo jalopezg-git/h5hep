@@ -1,5 +1,9 @@
-# h5hep: header-only library to read/write high-energy physics data in HDF5
-This code is for benchmark purposes only (ACAT 2021); DO NOT USE IN PRODUCTION.
+# h5hep: (unsupported, unofficial) header-only library to read/write high-energy physics data in HDF5
+THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
+
+THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
+
+THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
 
 h5hep allows the storage of simple HEP data in HDF5, hiding away the details of data representation. Currently, it supports two different column models:
 
@@ -54,7 +58,6 @@ GROUP "/" {
                })
          },
 ...
-
 $ # For ./simple_struct_fnal
 $ h5dump simple_struct.h5
 HDF5 "simple_struct.h5" {
