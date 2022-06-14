@@ -255,6 +255,13 @@ namespace h5hep {
 	size_t nElements = std::accumulate(extents.begin(), extents.end(), 0,
 					   [](size_t a, const Span &b) { return a + b.len; });
 	std::vector<Span> eltExts;
+	// At this point, the input param `extents` describes a set of collections to be read. The following
+	// call resolves the entries that belong to each of the collections, e.g. if `extents` contains a
+	// single element `{offset=4 size=3}`, the output `eltExts` will contain exactly 3 `Span`s that
+	// describe which elements to read from the child column (e.g., `{ {offset=10, size=1},
+	// {offset=11, size=20}, {offset=31, size=2} }`.
+	// The number of elements in the output vector is always equal to the number of elements described
+	// by `extents`.
 	LookupElements(extents, eltExts);
 
 	size_t hvl_i = 0;
@@ -283,6 +290,8 @@ namespace h5hep {
 
 	hsize_t offset = indexColumn->GetDataspaceSize();
 	size_t hvl_i = 0;
+	// Writing a collection requires both (i) write the actual values in the child column, and (ii) a
+	// stride of values in the index column that state the row they relate to.
 	for_each_row_in_extentlist(extents, E, i) {
 	  auto &hvl = hvls[hvl_i++];
 	  const auto rowIdx = E.offset + i;
