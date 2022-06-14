@@ -26,19 +26,17 @@ int main(int argc, char *argv[]) {
       });
 
     h5hep::WriteProperties props;
-    props.SetChunkSize(4);
+    props.SetChunkSize(10);
     props.SetCompressionLevel(0);
     auto file = h5hep::H5File::Create("simple_struct.h5");
     auto rw = Builder::MakeReaderWriter(file, root, props);
 
-    Foo chunk[4]{};
     std::vector<Bar> v{{1.1, 1.2}, {2.1, 2.2}, {3.1, 3.2}};
-    for (size_t i = 0; i < 4; ++i) {
-      chunk[i].i = i;
-      chunk[i].f = i + 1.2345f;
-      chunk[i].c = v;
+    h5hep::BufferedWriter<Foo> writer{rw};
+    for (int i = 0; i < 100; ++i) {
+      Foo row{/*i=*/ i, /*f=*/ i + 1.2345f, /*c=*/v};
+      writer.Write(row);
     }
-    rw->WriteChunk(0, chunk);
   }
 
   {
@@ -51,9 +49,9 @@ int main(int argc, char *argv[]) {
     auto file = h5hep::H5File::Open("simple_struct.h5");
     auto rw = Builder::MakeReaderWriter(file, root);
 
-    Foo chunk[4]{};
+    Foo chunk[10]{};
     rw->ReadChunk(0, chunk);
-    for (size_t i = 0; i < 4; ++i) {
+    for (size_t i = 0; i < 10; ++i) {
       std::cout << "i=" << chunk[i].i << " f=" << chunk[i].f << std::endl;
     }
   }
