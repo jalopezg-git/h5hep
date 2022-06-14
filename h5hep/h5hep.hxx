@@ -9,9 +9,9 @@
 #define _H5HEP_H5HEP_HXX
 
 #include <h5hep/common.hxx>
-#include <h5hep/schema.hxx>
 #include <h5hep/io.hxx>
-#include <h5hep/model_compoundtype.hxx>
 #include <h5hep/model_columnarfnal.hxx>
+#include <h5hep/model_compoundtype.hxx>
+#include <h5hep/schema.hxx>
 
 #endif // _H5HEP_H5HEP_HXX

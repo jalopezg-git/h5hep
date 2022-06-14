@@ -15,22 +15,22 @@
 #include <vector>
 
 #if defined(__GNUC__)
-# define likely(x)   __builtin_expect(!!(x), 1)
-# define unlikely(x) __builtin_expect(!!(x), 0)
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 #else
-# define likely(x)   x
-# define unlikely(x) x
-# define __restrict
+#define likely(x) x
+#define unlikely(x) x
+#define __restrict
 #endif
 
 /// \brief Iterate over each row described by a `std::vector<Span>`
-#define for_each_row_in_extentlist(__Es, __E, __i)	\
-  for (auto &__E : (__Es))				\
-    for (size_t __i = 0; i < __E.len; ++i)
+#define for_each_row_in_extentlist(__Es, __E, __i)                                                                     \
+    for (auto &__E : (__Es))                                                                                           \
+        for (size_t __i = 0; i < __E.len; ++i)
 
 namespace h5hep {
 
-  struct CollectionBase {
+struct CollectionBase {
     using Deleter_t = void (*)(void *p, void *privateData);
     hvl_t hvl{}; // Must appear first!
     Deleter_t deleter{};
@@ -40,25 +40,27 @@ namespace h5hep {
     CollectionBase(const hvl_t &hvl, Deleter_t d) : hvl{hvl.len, hvl.p}, deleter(d) {}
     ~CollectionBase() { invokeDeleter(); }
 
-    void invokeDeleter() { if (hvl.p && deleter) deleter(hvl.p, privateData); }
-    void assign(const hvl_t &hvl, Deleter_t d, void *privateData = nullptr) {
-      invokeDeleter();
-      this->hvl = hvl_t{hvl.len, hvl.p};
-      this->deleter = d;
-      this->privateData = privateData;
+    void invokeDeleter() {
+        if (hvl.p && deleter)
+            deleter(hvl.p, privateData);
     }
-  };
+    void assign(const hvl_t &hvl, Deleter_t d, void *privateData = nullptr) {
+        invokeDeleter();
+        this->hvl = hvl_t{hvl.len, hvl.p};
+        this->deleter = d;
+        this->privateData = privateData;
+    }
+};
 
-  /// \brief Variable-length collection of elements of type `T`. Might be used
-  /// as part of a larger data type to annotate a collection, e.g.
-  /// ```
-  /// struct Foo {
-  ///   float f;
-  ///   h5hep::Collection<int> i;
-  /// };
-  /// ```
-  template <typename T>
-  struct Collection : public CollectionBase {
+/// \brief Variable-length collection of elements of type `T`. Might be used
+/// as part of a larger data type to annotate a collection, e.g.
+/// ```
+/// struct Foo {
+///   float f;
+///   h5hep::Collection<int> i;
+/// };
+/// ```
+template <typename T> struct Collection : public CollectionBase {
   public:
     Collection() : CollectionBase({}, nullptr) {}
     Collection(const Collection<T> &c) : CollectionBase(hvl_t{c.size(), c.data()}, nullptr) {}
@@ -66,74 +68,86 @@ namespace h5hep {
     Collection(void *data, size_t size, Deleter_t d = nullptr) : CollectionBase(hvl_t{size, data}, d) {}
 
     Collection<T> &operator=(Collection<T> &&other) {
-      std::swap(hvl, other.hvl);
-      std::swap(deleter, other.deleter);
-      std::swap(privateData, other.privateData);
-      return *this;
+        std::swap(hvl, other.hvl);
+        std::swap(deleter, other.deleter);
+        std::swap(privateData, other.privateData);
+        return *this;
     }
 
     Collection<T> &operator=(const Collection<T> &other) {
-      assign(other.hvl, nullptr);
-      return *this;
+        assign(other.hvl, nullptr);
+        return *this;
     }
 
     Collection<T> &operator=(std::vector<T> &other) {
-      assign(hvl_t{other.size(), other.data()}, nullptr);
-      return *this;
+        assign(hvl_t{other.size(), other.data()}, nullptr);
+        return *this;
     }
 
     size_t size() const { return hvl.len; }
-    T *data() { return static_cast<T*>(hvl.p); }
+    T *data() { return static_cast<T *>(hvl.p); }
     T &operator[](size_t i) { return data()[i]; }
-  };
+};
 
-  /// \brief A span of size `len` starting at `offset`.
-  struct Span {
+/// \brief A span of size `len` starting at `offset`.
+struct Span {
     size_t offset;
     size_t len;
-  };
+};
 
-  /// \brief A HDF5 span type which might be used by column models as index into a collection.
-  struct H5Span_t {
+/// \brief A HDF5 span type which might be used by column models as index into a collection.
+struct H5Span_t {
     hid_t typeId;
     H5Span_t() {
-      typeId = H5Tcreate(H5T_COMPOUND, sizeof(Span));
-      assert(typeId != H5I_INVALID_HID && "Could not create H5Span compound type");
-      H5Tinsert(typeId, "offset", HOFFSET(Span, offset), H5T_NATIVE_ULONG);
-      H5Tinsert(typeId, "len", HOFFSET(Span, len), H5T_NATIVE_ULONG);
+        typeId = H5Tcreate(H5T_COMPOUND, sizeof(Span));
+        assert(typeId != H5I_INVALID_HID && "Could not create H5Span compound type");
+        H5Tinsert(typeId, "offset", HOFFSET(Span, offset), H5T_NATIVE_ULONG);
+        H5Tinsert(typeId, "len", HOFFSET(Span, len), H5T_NATIVE_ULONG);
     }
     ~H5Span_t() { H5Tclose(typeId); }
-  };
-  static H5Span_t H5Span{};
+};
+static H5Span_t H5Span{};
 
-  /// \brief Translate the C++ type `T` into a HDF5 type.
-  template <typename T>
-  constexpr hid_t GetH5TypeId() {
+/// \brief Translate the C++ type `T` into a HDF5 type.
+template <typename T> constexpr hid_t GetH5TypeId() {
     using U = typename std::decay<T>::type;
     static_assert(!std::is_pointer<U>::value && !std::is_reference<U>::value,
-		  "Pointer/references currently not supported");
+                  "Pointer/references currently not supported");
 
-    if constexpr (std::is_same<U, char>::value) return H5T_NATIVE_SCHAR;
-    if constexpr (std::is_same<U, unsigned char>::value) return H5T_NATIVE_UCHAR;
-    if constexpr (std::is_same<U, short>::value) return H5T_NATIVE_SHORT;
-    if constexpr (std::is_same<U, unsigned short>::value) return H5T_NATIVE_USHORT;
-    if constexpr (std::is_same<U, int>::value) return H5T_NATIVE_INT;
-    if constexpr (std::is_same<U, unsigned int>::value) return H5T_NATIVE_UINT;
-    if constexpr (std::is_same<U, long>::value) return H5T_NATIVE_LONG;
-    if constexpr (std::is_same<U, unsigned long>::value) return H5T_NATIVE_ULONG;
-    if constexpr (std::is_same<U, long long>::value) return H5T_NATIVE_LLONG;
-    if constexpr (std::is_same<U, unsigned long long>::value) return H5T_NATIVE_ULLONG;
-    if constexpr (std::is_same<U, float>::value) return H5T_NATIVE_FLOAT;
-    if constexpr (std::is_same<U, double>::value) return H5T_NATIVE_DOUBLE;
-    if constexpr (std::is_same<U, bool>::value) return H5T_NATIVE_HBOOL;
+    if constexpr (std::is_same<U, char>::value)
+        return H5T_NATIVE_SCHAR;
+    if constexpr (std::is_same<U, unsigned char>::value)
+        return H5T_NATIVE_UCHAR;
+    if constexpr (std::is_same<U, short>::value)
+        return H5T_NATIVE_SHORT;
+    if constexpr (std::is_same<U, unsigned short>::value)
+        return H5T_NATIVE_USHORT;
+    if constexpr (std::is_same<U, int>::value)
+        return H5T_NATIVE_INT;
+    if constexpr (std::is_same<U, unsigned int>::value)
+        return H5T_NATIVE_UINT;
+    if constexpr (std::is_same<U, long>::value)
+        return H5T_NATIVE_LONG;
+    if constexpr (std::is_same<U, unsigned long>::value)
+        return H5T_NATIVE_ULONG;
+    if constexpr (std::is_same<U, long long>::value)
+        return H5T_NATIVE_LLONG;
+    if constexpr (std::is_same<U, unsigned long long>::value)
+        return H5T_NATIVE_ULLONG;
+    if constexpr (std::is_same<U, float>::value)
+        return H5T_NATIVE_FLOAT;
+    if constexpr (std::is_same<U, double>::value)
+        return H5T_NATIVE_DOUBLE;
+    if constexpr (std::is_same<U, bool>::value)
+        return H5T_NATIVE_HBOOL;
     return H5I_INVALID_HID;
-  }
+}
 
-  namespace internal {
-    hsize_t zero[] = {0};
-    hsize_t one[] = {1};
-    hsize_t unlimited[] = {H5S_UNLIMITED};
-  } // namespace internal
+namespace internal {
+hsize_t zero[] = {0};
+hsize_t one[] = {1};
+hsize_t unlimited[] = {H5S_UNLIMITED};
+} // namespace internal
 
 } // namespace h5hep
 
