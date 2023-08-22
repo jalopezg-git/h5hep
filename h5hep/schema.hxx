@@ -125,8 +125,8 @@ template <ColumnModel M> struct SchemaBuilder {
         return std::make_shared<CollectionNode<M, typename T::Value_t>>(name, offset, inner);
     }
 
-    template <typename... Ts> static std::shared_ptr<ReaderWriterSpec<M>> MakeReaderWriter(Ts... args) {
-        return std::make_shared<ReaderWriterSpec<M>>(args...);
+    template <typename... Ts> static std::shared_ptr<ReaderWriterSpec<M>> MakeReaderWriter(Ts &&...args) {
+        return std::make_shared<ReaderWriterSpec<M>>(std::forward<Ts>(args)...);
     }
 };
 } // namespace schema
