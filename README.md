@@ -1,18 +1,22 @@
-# h5hep: (unsupported, unofficial) header-only library to read/write high-energy physics data in HDF5
-THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
+# h5hep: (unsupported) header-only library to read/write high-energy physics data in HDF5
 
-THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
-
-THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
+> [!WARNING]
+> THIS CODE IS FOR BENCHMARK PURPOSES ONLY (ACAT 2021); DO NOT USE IN PRODUCTION.
 
 h5hep allows the storage of simple HEP data in HDF5, hiding away the details of data representation. Currently, it supports two different column models:
 
-- COMPOUND_TYPE: that uses (possibly nested) compound types to represent data for each row.
+- `COMPOUND_TYPE`: that uses (possibly nested) compound types to represent data for each row.
 
-- COLUMNAR_FNAL: uses one HDF5 dataset per primitive column. Collections are translated to a HDF5 group and an index column. For more information, see [this](https://inspirehep.net/files/e048b0cd122919dc9a009793983a81e0) publication.
+- `COLUMNAR_FNAL`: uses one HDF5 dataset per primitive column. Collections are translated to a HDF5 group and an index column. For more information, see [this](https://inspirehep.net/files/e048b0cd122919dc9a009793983a81e0) publication.
 
 ## Example
-The Makefile in the examples/ directory generates two versions of [simple_struct.cxx](https://github.com/jalopezg-r00t/h5hep/blob/master/examples/simple_struct.cxx): `simple_struct_compound` and `simple_struct_fnal`. As seen below, both generate the same output:
+The [simple_struct.cxx](https://github.com/jalopezg-git/h5hep/blob/master/examples/simple_struct.cxx) example gives an idea on how to use the interface.
+The schema used for reading only includes a few selected columns.
+The Makefile compiles two differrent versions of the same code, differing only in the value of the `__COLUMN_MODEL__` preprocessor macro, which is used as a template parameter for `SchemaBuilder`.
+
+As shown below, this results in a totally different HDF5 representation of the stored data.
+This was, in turn, used to measure the performance achieved by HDF5 in different scenarios (see this [ACAT publication](https://doi.org/10.1088/1742-6596%2f2438%2f1%2f012118)).
+
 ```bash
 $ ./simple_struct_compound
 i=0 f=1.2345
@@ -24,10 +28,7 @@ i=0 f=1.2345
 i=1 f=2.2345
 i=2 f=3.2345
 i=3 f=4.2345
-```
 
-However, the HDF5 representation of the schema and user data is completely different:
-```bash
 $ # For ./simple_struct_compound
 $ h5dump simple_struct.h5
 HDF5 "simple_struct.h5" {
